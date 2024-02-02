@@ -22,6 +22,7 @@ import org.springframework.test.web.reactive.server.WebTestClient;
 import wiremock.com.fasterxml.jackson.core.JsonProcessingException;
 import wiremock.com.fasterxml.jackson.databind.ObjectMapper;
 
+import static com.example.demo.utils.JsonConversionUtils.getJson;
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
 import static org.junit.Assert.assertNotNull;
@@ -58,7 +59,7 @@ public class StudyGroupApiTest {
     @MethodSource("studyGroupsProvider")
     public void createStudyGroupTest(String testName, StudyGroup studyGroup, int status) throws JsonProcessingException {
 
-        wireMockServer.stubFor(WireMock.post(urlEqualTo("/create"))
+        wireMockServer.stubFor(WireMock.post(urlEqualTo("/studyGroups/create"))
                                        .willReturn(aResponse().withHeader("Content-Type", "application/json")
                                                            .withStatus(status)
                                                            .withBody(objectMapper.writeValueAsString(studyGroup))));
@@ -66,7 +67,7 @@ public class StudyGroupApiTest {
                 .baseUrl(baseUrl)
                 .build()
                 .post()
-                .uri("/create")
+                .uri("/studyGroups/create")
                 .contentType(MediaType.APPLICATION_JSON)
                 .exchange()
                 .expectStatus()
@@ -78,7 +79,7 @@ public class StudyGroupApiTest {
 
         StudyGroup expectedStudyGroup = new StudyGroup(1, "Math123", Subject.Math, new DateTime(), List.of(new User(1, "Student1")));
 
-        wireMockServer.stubFor(WireMock.post(urlEqualTo("/create"))
+        wireMockServer.stubFor(WireMock.post(urlEqualTo("/studyGroups/create"))
                                        .willReturn(aResponse().withHeader("Content-Type", "application/json")
                                                            .withStatus(200)
                                                            .withBody(objectMapper.writeValueAsString(expectedStudyGroup))));
@@ -86,7 +87,7 @@ public class StudyGroupApiTest {
                 .baseUrl(baseUrl)
                 .build()
                 .post()
-                .uri("/create")
+                .uri("/studyGroups/create")
                 .contentType(MediaType.APPLICATION_JSON)
                 .exchange()
                 .expectStatus()
@@ -104,7 +105,7 @@ public class StudyGroupApiTest {
     void usersCanCreateOnlyOneStudyGroupForSingleSubject() {
         Subject subject = Subject.Math;
 
-        wireMockServer.stubFor(WireMock.post(WireMock.urlEqualTo("/create"))
+        wireMockServer.stubFor(WireMock.post(WireMock.urlEqualTo("/studyGroups/create"))
                                        .willReturn(WireMock.aResponse()
                                                            .withStatus(200)));
 
@@ -114,14 +115,14 @@ public class StudyGroupApiTest {
                 .baseUrl(baseUrl)
                 .build()
                 .post()
-                .uri("/create")
+                .uri("/studyGroups/create")
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(firstStudyGroup)
                 .exchange()
                 .expectStatus()
                 .isOk();
 
-        wireMockServer.stubFor(WireMock.post(WireMock.urlEqualTo("/create"))
+        wireMockServer.stubFor(WireMock.post(WireMock.urlEqualTo("/studyGroups/create"))
                                        .willReturn(WireMock.aResponse()
                                                            .withStatus(400)));
         StudyGroup secondStudyGroup = new StudyGroup(2, "Math345", subject, new DateTime(), List.of(creatorUser));
@@ -130,42 +131,42 @@ public class StudyGroupApiTest {
                 .baseUrl(baseUrl)
                 .build()
                 .post()
-                .uri("/create")
+                .uri("/studyGroups/create")
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(secondStudyGroup)
                 .exchange()
                 .expectStatus()
                 .isBadRequest();
 
-        wireMockServer.verify(WireMock.exactly(2), WireMock.postRequestedFor(WireMock.urlEqualTo("/create")));
+        wireMockServer.verify(WireMock.exactly(2), WireMock.postRequestedFor(WireMock.urlEqualTo("/studyGroups/create")));
     }
 
     @ParameterizedTest
     @MethodSource("subjectsProvider")
     void usersCanJoinStudyGroupForDifferentSubjects(Subject subject) {
         StudyGroup studyGroup = new StudyGroup(1, subject.toString(), subject, new DateTime(), List.of(creatorUser));
-        wireMockServer.stubFor(WireMock.post(WireMock.urlEqualTo("/create"))
+        wireMockServer.stubFor(WireMock.post(WireMock.urlEqualTo("/studyGroups/create"))
                                        .willReturn(WireMock.aResponse()
                                                            .withStatus(200)));
         WebTestClient.bindToServer()
                 .baseUrl(baseUrl)
                 .build()
                 .post()
-                .uri("/create")
+                .uri("/studyGroups/create")
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(studyGroup)
                 .exchange()
                 .expectStatus()
                 .isOk();
 
-        wireMockServer.stubFor(WireMock.post(WireMock.urlEqualTo("/join"))
+        wireMockServer.stubFor(WireMock.post(WireMock.urlEqualTo("/studyGroups/join"))
                                        .willReturn(WireMock.aResponse()
                                                            .withStatus(200)));
         WebTestClient.bindToServer()
                 .baseUrl(baseUrl)
                 .build()
                 .post()
-                .uri("/join")
+                .uri("/studyGroups/join")
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(new UserPostRequest(joinerUser.userId, studyGroup.getStudyGroupId()))
                 .exchange()
@@ -177,41 +178,41 @@ public class StudyGroupApiTest {
     @MethodSource("subjectsProvider")
     void usersJoinAlreadyJoinedStudyGroupInvalidTest(Subject subject) {
         StudyGroup studyGroup = new StudyGroup(1, subject.toString(), subject, new DateTime(), List.of(creatorUser));
-        wireMockServer.stubFor(WireMock.post(WireMock.urlEqualTo("/create"))
+        wireMockServer.stubFor(WireMock.post(WireMock.urlEqualTo("/studyGroups/create"))
                                        .willReturn(WireMock.aResponse()
                                                            .withStatus(200)));
         WebTestClient.bindToServer()
                 .baseUrl(baseUrl)
                 .build()
                 .post()
-                .uri("/create")
+                .uri("/studyGroups/create")
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(studyGroup)
                 .exchange()
                 .expectStatus()
                 .isOk();
-        wireMockServer.stubFor(WireMock.post(WireMock.urlEqualTo("/join"))
+        wireMockServer.stubFor(WireMock.post(WireMock.urlEqualTo("/studyGroups/join"))
                                        .willReturn(WireMock.aResponse()
                                                            .withStatus(200)));
         WebTestClient.bindToServer()
                 .baseUrl(baseUrl)
                 .build()
                 .post()
-                .uri("/join")
+                .uri("/studyGroups/join")
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(new UserPostRequest(studyGroup.getStudyGroupId(), joinerUser.userId))
                 .exchange()
                 .expectStatus()
                 .isEqualTo(200);
 
-        wireMockServer.stubFor(WireMock.post(WireMock.urlEqualTo("/join"))
+        wireMockServer.stubFor(WireMock.post(WireMock.urlEqualTo("/studyGroups/join"))
                                        .willReturn(WireMock.aResponse()
                                                            .withStatus(409)));
         WebTestClient.bindToServer()
                 .baseUrl(baseUrl)
                 .build()
                 .post()
-                .uri("/join")
+                .uri("/studyGroups/join")
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(new UserPostRequest(studyGroup.getStudyGroupId(), joinerUser.userId))
                 .exchange()
@@ -223,42 +224,42 @@ public class StudyGroupApiTest {
     @MethodSource("subjectsProvider")
     void usersCanLeaveStudyGroup(Subject subject) {
         StudyGroup studyGroup = new StudyGroup(1, subject.toString(), subject, new DateTime(), List.of(creatorUser));
-        wireMockServer.stubFor(WireMock.post(WireMock.urlEqualTo("/create"))
+        wireMockServer.stubFor(WireMock.post(WireMock.urlEqualTo("/studyGroups/create"))
                                        .willReturn(WireMock.aResponse()
                                                            .withStatus(200)));
         WebTestClient.bindToServer()
                 .baseUrl(baseUrl)
                 .build()
                 .post()
-                .uri("/create")
+                .uri("/studyGroups/create")
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(studyGroup)
                 .exchange()
                 .expectStatus()
                 .isOk();
 
-        wireMockServer.stubFor(WireMock.post(WireMock.urlEqualTo("/join"))
+        wireMockServer.stubFor(WireMock.post(WireMock.urlEqualTo("/studyGroups/join"))
                                        .willReturn(WireMock.aResponse()
                                                            .withStatus(200)));
         WebTestClient.bindToServer()
                 .baseUrl(baseUrl)
                 .build()
                 .post()
-                .uri("/join")
+                .uri("/studyGroups/join")
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(new UserPostRequest(leaverUser.userId, studyGroup.getStudyGroupId()))
                 .exchange()
                 .expectStatus()
                 .isEqualTo(200);
 
-        wireMockServer.stubFor(WireMock.post(WireMock.urlEqualTo("/leave"))
+        wireMockServer.stubFor(WireMock.post(WireMock.urlEqualTo("/studyGroups/leave"))
                                        .willReturn(WireMock.aResponse()
                                                            .withStatus(200)));
         WebTestClient.bindToServer()
                 .baseUrl(baseUrl)
                 .build()
                 .post()
-                .uri("/leave")
+                .uri("/studyGroups/leave")
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(new UserPostRequest(leaverUser.userId, studyGroup.getStudyGroupId()))
                 .exchange()
@@ -272,45 +273,66 @@ public class StudyGroupApiTest {
         User creator = new User(1, "Creator");
         User leaver = new User(2, "Leaver");
         StudyGroup studyGroup = new StudyGroup(1, subject.toString(), subject, new DateTime(), List.of(creator));
-        wireMockServer.stubFor(WireMock.post(WireMock.urlEqualTo("/create"))
+        wireMockServer.stubFor(WireMock.post(WireMock.urlEqualTo("/studyGroups/create"))
                                        .willReturn(WireMock.aResponse()
                                                            .withStatus(200)));
         WebTestClient.bindToServer()
                 .baseUrl(baseUrl)
                 .build()
                 .post()
-                .uri("/create")
+                .uri("/studyGroups/create")
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(studyGroup)
                 .exchange()
                 .expectStatus()
                 .isOk();
-        wireMockServer.stubFor(WireMock.post(WireMock.urlEqualTo("/leave"))
+        wireMockServer.stubFor(WireMock.post(WireMock.urlEqualTo("/studyGroups/leave"))
                                        .willReturn(WireMock.aResponse()
                                                            .withStatus(200)));
         WebTestClient.bindToServer()
                 .baseUrl(baseUrl)
                 .build()
                 .post()
-                .uri("/leave")
+                .uri("/studyGroups/leave")
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(new UserPostRequest(studyGroup.getStudyGroupId(), leaver.userId))
                 .exchange()
                 .expectStatus()
                 .isEqualTo(200);
-        wireMockServer.stubFor(WireMock.post(WireMock.urlEqualTo("/leave"))
+        wireMockServer.stubFor(WireMock.post(WireMock.urlEqualTo("/studyGroups/leave"))
                                        .willReturn(WireMock.aResponse()
                                                            .withStatus(409)));
         WebTestClient.bindToServer()
                 .baseUrl(baseUrl)
                 .build()
                 .post()
-                .uri("/leave")
+                .uri("/studyGroups/leave")
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(new UserPostRequest(studyGroup.getStudyGroupId(), leaver.userId))
                 .exchange()
                 .expectStatus()
                 .isEqualTo(409);
+    }
+
+    @Test
+    void userCanViewListOfStudyGroups() {
+        wireMockServer.stubFor(WireMock.post(WireMock.urlEqualTo("/studyGroups/getAll"))
+                                       .willReturn(WireMock.aResponse()
+                                                           .withStatus(200)
+                                                           .withHeader("Content-Type", "application/json")
+                                                           .withBody(getJson("all.json"))));
+
+        WebTestClient.bindToServer()
+                .baseUrl(baseUrl)
+                .build()
+                .post()
+                .uri("/studyGroups/getAll")
+                .contentType(MediaType.APPLICATION_JSON)
+                .exchange()
+                .expectStatus()
+                .isOk()
+                .expectBodyList(StudyGroup.class)
+                .hasSize(3);
     }
 
     static Stream<Arguments> studyGroupsProvider() {
