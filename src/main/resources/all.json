@@ -1,0 +1,29 @@
+[
+  {
+    "studyGroupId": 1,
+    "name": "Math Study Group",
+    "subject": "Math",
+    "createDate": {},
+    "users": [
+      {}
+    ]
+  },
+  {
+    "studyGroupId": 2,
+    "name": "Physics Study Group",
+    "subject": "Physics",
+    "createDate": {},
+    "users": [
+      {}
+    ]
+  },
+  {
+    "studyGroupId": 3,
+    "name": "Chemistry Study Group",
+    "subject": "Chemistry",
+    "createDate": {},
+    "users": [
+      {}
+    ]
+  }
+]

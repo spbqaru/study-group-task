@@ -1,0 +1,20 @@
+[
+  {
+    "studyGroupId": 1,
+    "name": "Math Study Group",
+    "subject": "Math",
+    "createDate": {},
+    "users": [
+      {}
+    ]
+  },
+  {
+    "studyGroupId": 2,
+    "name": "Math Study Group",
+    "subject": "Math",
+    "createDate": {},
+    "users": [
+      {}
+    ]
+  }
+]
